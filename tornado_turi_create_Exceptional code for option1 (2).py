@@ -1,23 +1,18 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
+# tornadohandlers.py
 #!/usr/bin/python
 '''Starts and runs the scikit learn server'''
 
-from pymongo import MongoClient
 import tornado.web
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.options import define, options
-from motor import motor_tornado  # Import Motor for asynchronous MongoDB connection
+from motor import motor_tornado
 from pprint import PrettyPrinter
 
 # Custom imports
 from basehandler import BaseHandler
 import turihandlers as th
+import motorhandlers as mh
 import examplehandlers as eh
 
 define("port", default=8000, help="run on the given port", type=int)
@@ -31,12 +26,18 @@ class Application(tornado.web.Application):
             (r"/Handlers[/]?", th.PrintHandlers),
             (r"/AddDataPoint[/]?", th.UploadLabeledDatapointHandler),
             (r"/GetNewDatasetId[/]?", th.RequestNewDatasetId),
-            (r"/UpdateModel[/]?", th.UpdateModelForDatasetIdTuri),  # Updated handler for Turi
-            (r"/PredictOne[/]?", th.PredictOneFromDatasetIdTuri),   # Updated handler for Turi
+            (r"/UpdateModel[/]?", th.UpdateModelForDatasetIdTuri),
+            (r"/PredictOne[/]?", th.PredictOneFromDatasetIdTuri),
             (r"/GetExample[/]?", eh.TestHandler),
             (r"/DoPost[/]?", eh.PostHandlerAsGetArguments),
             (r"/PostWithJson[/]?", eh.JSONPostHandler),
             (r"/MSLC[/]?", eh.MSLC),
+            # Add the motorhandlers
+            (r"/MotorHandlers[/]?", mh.PrintHandlers),
+            (r"/AddDataPointMotor[/]?", mh.UploadLabeledDatapointHandler),
+            (r"/GetNewDatasetIdMotor[/]?", mh.RequestNewDatasetId),
+            (r"/UpdateModelMotor[/]?", mh.UpdateModelForDatasetIdMotor),
+            (r"/PredictOneMotor[/]?", mh.PredictOneFromDatasetIdMotor),
         ]
 
         self.handlers_string = str(handlers)
@@ -44,16 +45,15 @@ class Application(tornado.web.Application):
         try:
             print('=================================')
             print('====ATTEMPTING MONGO CONNECT=====')
-            self.client = motor_tornado.MotorClient()  # Initialize MotorClient for asynchronous MongoDB connection
-            print(self.client.server_info())  # Force pymongo to look for possible running servers, error if none running
-            # If we get here, at least one instance of pymongo is running
-            self.db = self.client.turidatabase  # Database with labeledinstances, models
+            self.client = motor_tornado.MotorClient()
+            print(self.client.server_info())
+            self.db = self.client.turidatabase
 
         except Exception as e:
             print('Could not initialize database connection, stopping execution')
             print(f'Error: {e}')
 
-        self.clf = {}  # The classifier model
+        self.clf = {}
         print('=================================')
         print('==========HANDLER INFO===========')
         pp.pprint(handlers)
@@ -62,8 +62,7 @@ class Application(tornado.web.Application):
         tornado.web.Application.__init__(self, handlers, **settings)
 
     def __exit__(self):
-        self.client.close()  # Just in case
-
+        self.client.close()
 
 def main():
     tornado.options.parse_command_line()
@@ -73,4 +72,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
