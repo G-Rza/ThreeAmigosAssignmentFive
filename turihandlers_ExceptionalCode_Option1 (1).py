@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
+# turihandlers.py
 #!/usr/bin/python
 
 from pymongo import MongoClient
@@ -12,11 +7,10 @@ from tornado.web import HTTPError
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.options import define, options
-from basehandler import BaseHandler
-
+from basehandler import BaseHandler  # Add this line
 import turicreate as tc
-import numpy as np
 import json
+import numpy as np
 
 class PrintHandlers(BaseHandler):
     def get(self):
@@ -211,4 +205,3 @@ class ModelComparisonResults(BaseHandler):
         }
 
         self.write_json(response)
-
